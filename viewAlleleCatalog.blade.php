@@ -3,12 +3,11 @@ include resource_path() . '/views/system/config.blade.php';
 
 $organism = $info['organism'];
 $dataset = $info['dataset'];
+$gene = $info['gene'];
 $chromosome = $info['chromosome'];
 $position = $info['position'];
 $phenotype = $info['phenotype'];
 
-// $gene_array = $info['gene_array'];
-// $improvement_status_array = $info['improvement_status_array'];
 $gene_result_arr = $info['gene_result_arr'];
 $allele_catalog_result_arr = $info['allele_catalog_result_arr'];
 
@@ -162,8 +161,8 @@ $allele_catalog_result_arr = $info['allele_catalog_result_arr'];
             echo "</div>";
 
             echo "<div style='margin-top:10px;' align='right'>";
-            echo "<button onclick=\"queryAllCountsByGeneChromosomePositions('" . $organism . "', '" . $dataset . "', '" . $allele_catalog_result_arr[$i][0]->Gene . "', '" . $chromosome . "')\" style=\"margin-right:20px;\"> Download (Accession Counts)</button>";
-            echo "<button onclick=\"queryAllByGeneChromosomePositions('" . $organism . "', '" . $dataset . "', '" . $allele_catalog_result_arr[$i][0]->Gene . "', '" . $chromosome . "')\"> Download (All Accessions)</button>";
+            echo "<button onclick=\"queryAllCountsByGene('" . $organism . "', '" . $dataset . "', '" . $allele_catalog_result_arr[$i][0]->Gene . "', '" . $allele_catalog_result_arr[$i][0]->Chromosome . "')\" style=\"margin-right:20px;\"> Download (Accession Counts)</button>";
+            echo "<button onclick=\"queryAllByGene('" . $organism . "', '" . $dataset . "', '" . $allele_catalog_result_arr[$i][0]->Gene . "', '" . $allele_catalog_result_arr[$i][0]->Chromosome . "')\"> Download (All Accessions)</button>";
             echo "</div>";
 
             echo "<br />";

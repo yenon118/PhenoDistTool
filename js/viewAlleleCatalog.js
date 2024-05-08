@@ -217,7 +217,7 @@ function constructMetadataTable(res, dataset, key, gene, chromosome, position, g
 
 function queryMetadataByImprovementStatusAndGenotypeCombination(organism, dataset, key, gene, chromosome, position, genotype, genotypeDescription) {
     $.ajax({
-        url: 'queryMetadataByImprovementStatusAndGenotypeCombination/'+organism,
+        url: 'queryMetadataByImprovementStatusAndGenotypeCombination/' + organism,
         type: 'GET',
         contentType: 'application/json',
         data: {
@@ -252,11 +252,11 @@ function queryMetadataByImprovementStatusAndGenotypeCombination(organism, datase
 }
 
 
-function queryAllCountsByGeneChromosomePositions(organism, dataset, gene, chromosome) {
+function queryAllCountsByGene(organism, dataset, gene, chromosome) {
 
     if (dataset && gene) {
         $.ajax({
-            url: 'queryAllCountsByGeneChromosomePositions/'+organism,
+            url: 'queryAllCountsByGene/' + organism,
             type: 'GET',
             contentType: 'application/json',
             data: {
@@ -287,11 +287,11 @@ function queryAllCountsByGeneChromosomePositions(organism, dataset, gene, chromo
 }
 
 
-function queryAllByGeneChromosomePositions(organism, dataset, gene, chromosome) {
+function queryAllByGene(organism, dataset, gene, chromosome) {
 
     if (dataset && gene) {
         $.ajax({
-            url: 'queryAllByGeneChromosomePositions/'+organism,
+            url: 'queryAllByGene/' + organism,
             type: 'GET',
             contentType: 'application/json',
             data: {

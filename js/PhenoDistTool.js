@@ -153,7 +153,8 @@ async function updatePhenotypeSelections(phenotype_accordion_id, organism, datas
 
             // Create an input tag
             var input_tag = document.createElement('input');
-            input_tag.type = 'checkbox';
+            // input_tag.type = 'checkbox';
+            input_tag.type = 'radio';
             input_tag.id = current_id;
             input_tag.name = 'phenotype[]';
             input_tag.value = current_phenotype;
@@ -176,6 +177,7 @@ async function updatePhenotypeSelections(phenotype_accordion_id, organism, datas
             collapsible: true,
             icons: ""
         });
+
         // var options = $("#"+String(phenotype_accordion_id)).accordion("option");
         // console.log(options);
     }

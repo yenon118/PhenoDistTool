@@ -3,7 +3,6 @@ include resource_path() . '/views/system/config.blade.php';
 
 $organism = $info['organism'];
 $dataset = $info['dataset'];
-$gene = $info['gene'];
 $phenotype_array = $info['phenotype_array'];
 
 @endphp
@@ -27,19 +26,18 @@ $phenotype_array = $info['phenotype_array'];
     <br />
     <br />
 
-    <div id="accordion_3"></div>
+    <div id="accordion_2"></div>
 
 
     <div class="footer" style="margin-top:20px;float:right;">© Copyright 2024 KBCommons</div>
 </body>
 
-<script src="{{ asset('system/home/PhenoDistTool/js/viewStatisticalTestingResults.js') }}" type="text/javascript"></script>
+<script src="{{ asset('system/home/PhenoDistTool/js/viewGeneSummaryData.js') }}" type="text/javascript"></script>
 
 <script type="text/javascript">
     var organism = <?php if(isset($organism)) {echo json_encode($organism, JSON_INVALID_UTF8_IGNORE);} else {echo "";}?>;
     var dataset = <?php if(isset($dataset)) {echo json_encode($dataset, JSON_INVALID_UTF8_IGNORE);} else {echo "";}?>;
-    var gene = <?php if(isset($gene)) {echo json_encode($gene, JSON_INVALID_UTF8_IGNORE);} else {echo "";}?>;
     var phenotype_array = <?php if(isset($phenotype_array)) {echo json_encode($phenotype_array, JSON_INVALID_UTF8_IGNORE);} else {echo "";}?>;
 
-    updatePhenotypeDistribution('accordion_3', organism, dataset, gene, phenotype_array);
+    updateGeneRanking('accordion_2', organism, dataset, phenotype_array);
 </script>

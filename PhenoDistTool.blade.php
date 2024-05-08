@@ -24,20 +24,20 @@ $dataset = $info['dataset'];
 <br />
 
 
-<form action="{{ route('system.tools.PhenoDistTool.viewStatisticalTestingResults', ['organism'=>$organism]) }}" onsubmit="return validateForm('{{ $organism }}', 'error_message_div')" method="get">
+<form action="{{ route('system.tools.PhenoDistTool.viewGeneSummaryData', ['organism'=>$organism]) }}" onsubmit="return validateForm('{{ $organism }}', 'error_message_div')" method="get" target="_blank">
     <div id="accordion_1"></div>
 
     <br/><br/>
 
     <div style='margin-top:10px;' align='center'>
-        <button type="button" onclick="uncheck_all_phenotypes('{{ $organism }}')" style="margin-right:20px;">Uncheck All Phenotypes</button>
-        <button type="button" onclick="check_all_phenotypes('{{ $organism }}')" style="margin-right:20px;">Check All Phenotypes</button>
+        <!-- <button type="button" onclick="uncheck_all_phenotypes('{{ $organism }}')" style="margin-right:20px;">Uncheck All Phenotypes</button> -->
+        <!-- <button type="button" onclick="check_all_phenotypes('{{ $organism }}')" style="margin-right:20px;">Check All Phenotypes</button> -->
 
-        <label for="dataset_1" style="margin-left:20px;"><b>Dataset:</b></label>
-        <select name="dataset_1" id="dataset_1" onchange="updateChromosomeByDataPanelSelection(event)"></select>
+        <label for="dataset_1"><b>Dataset:</b></label>
+        <select name="dataset_1" id="dataset_1"></select>
 
-        <label for="chromosome_1" style="margin-left:20px;"><b>Chromosome:</b></label>
-        <select name="chromosome_1" id="chromosome_1"></select>
+        <!-- <label for="chromosome_1" style="margin-left:20px;"><b>Chromosome:</b></label> -->
+        <!-- <select name="chromosome_1" id="chromosome_1"></select> -->
     </div>
 
     <br/><br/>
@@ -71,7 +71,7 @@ $dataset = $info['dataset'];
 <script type="text/javascript">
     updatePhenotypeSelections('accordion_1', '{{ $organism }}', '{{ $dataset }}');
     updateDatasetSelections('dataset_1', '{{ $organism }}');
-    updateChromosomeSelections('chromosome_1', '{{ $organism }}', '{{ $dataset }}');
+    // updateChromosomeSelections('chromosome_1', '{{ $organism }}', '{{ $dataset }}');
 </script>
 
 @endsection

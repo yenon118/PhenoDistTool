@@ -1,13 +1,12 @@
-async function queryPhenotypeDistribution(organism, dataset, gene, phenotypes) {
+async function queryGeneRanking(organism, dataset, phenotypes) {
     return new Promise((resolve, reject) => {
         $.ajax({
-            url: 'queryPhenotypeDistribution/' + organism,
+            url: 'queryGeneRanking/' + organism,
             type: 'GET',
             contentType: 'application/json',
             data: {
                 Organism: organism,
                 Dataset: dataset,
-                Gene: gene,
                 Phenotypes: phenotypes
             },
             success: function (response) {
@@ -22,11 +21,11 @@ async function queryPhenotypeDistribution(organism, dataset, gene, phenotypes) {
     });
 }
 
-async function updatePhenotypeDistribution(phenotype_accordion_id, organism, dataset, gene, phenotypes) {
-    var result_array = await queryPhenotypeDistribution(organism, dataset, gene, phenotypes);
-    var phenotype_distribution_array = result_array['Phenotype_Distribution_Array'];
+async function updateGeneRanking(phenotype_accordion_id, organism, dataset, phenotypes) {
+    var result_array = await queryGeneRanking(organism, dataset, phenotypes);
+    var gene_ranking_array = result_array['Gene_Ranking_Array'];
 
-    if (phenotype_distribution_array) {
+    if (gene_ranking_array) {
         // Check the existance of accordion instance and remove if it exists
         var accordion_instance = $("#" + String(phenotype_accordion_id)).accordion("instance");
         if (accordion_instance != undefined) {
@@ -36,12 +35,11 @@ async function updatePhenotypeDistribution(phenotype_accordion_id, organism, dat
         document.getElementById(phenotype_accordion_id).innerHTML = "";
 
         phenotype_array = [];
-        for (let i = 0; i < phenotype_distribution_array.length; i++) {
-            var header_array = Object.keys(phenotype_distribution_array[i]);
-            var current_chromosome = phenotype_distribution_array[i]['Chromosome'];
-            var current_position = phenotype_distribution_array[i]['Position'];
-            var current_phenotype = phenotype_distribution_array[i]['Phenotype'];
-            var current_phenotype_data_type = phenotype_distribution_array[i]['Phenotype_Data_Type'];
+        for (let i = 0; i < gene_ranking_array.length; i++) {
+            var header_array = Object.keys(gene_ranking_array[i]);
+            var current_gene = gene_ranking_array[i]['Gene'];
+            var current_phenotype = gene_ranking_array[i]['Phenotype'];
+            var current_phenotype_data_type = gene_ranking_array[i]['Phenotype_Data_Type'];
 
             if (!phenotype_array.includes(current_phenotype)) {
                 // Create a h3 tag
@@ -76,6 +74,9 @@ async function updatePhenotypeDistribution(phenotype_accordion_id, organism, dat
                 var header_th_tag = document.createElement("th");
                 header_th_tag.setAttribute("style", "border:1px solid black; min-width:100px; height:18.5px;");
                 header_tr_tag.appendChild(header_th_tag);
+                var header_th_tag = document.createElement("th");
+                header_th_tag.setAttribute("style", "border:1px solid black; min-width:100px; height:18.5px;");
+                header_tr_tag.appendChild(header_th_tag);
                 // Add headings
                 for (let i = 0; i < header_array.length; i++) {
                     var header_th_tag = document.createElement("th");
@@ -93,6 +94,22 @@ async function updatePhenotypeDistribution(phenotype_accordion_id, organism, dat
             var detail_tr_tag = document.createElement("tr");
             detail_tr_tag.style.backgroundColor = ((i % 2) ? "#FFFFFF" : "#DDFFDD");
 
+            // Add a view Allele Catalog button column
+            var detail_td_tag = document.createElement("td");
+            detail_td_tag.setAttribute("style", "border:1px solid black; min-width:100px; height:18.5px;");
+            detail_tr_tag.appendChild(detail_td_tag);
+            var button_tag = document.createElement("button");
+            button_tag.type = 'button';
+            detail_td_tag.appendChild(button_tag);
+            var a_tag = document.createElement("a");
+            a_tag.target = '_blank';
+            a_tag.href = '../viewAlleleCatalog/' + organism + '?';
+            a_tag.href = a_tag.href + 'Dataset=' + String(dataset) + '&';
+            a_tag.href = a_tag.href + 'Gene=' + String(current_gene) + '&';
+            a_tag.href = a_tag.href + 'Phenotype=' + String(current_phenotype) + '';
+            a_tag.innerHTML = 'View Allele Catalog';
+            button_tag.appendChild(a_tag);
+
             // Add a view phenotype distribution button column
             var detail_td_tag = document.createElement("td");
             detail_td_tag.setAttribute("style", "border:1px solid black; min-width:100px; height:18.5px;");
@@ -102,18 +119,17 @@ async function updatePhenotypeDistribution(phenotype_accordion_id, organism, dat
             detail_td_tag.appendChild(button_tag);
             var a_tag = document.createElement("a");
             a_tag.target = '_blank';
-            a_tag.href = '../viewVariantAndPhenotypeFigures/' + organism + '?';
+            a_tag.href = '../viewStatisticalTestingResults/' + organism + '?';
             a_tag.href = a_tag.href + 'Dataset=' + String(dataset) + '&';
-            a_tag.href = a_tag.href + 'Chromosome=' + String(current_chromosome) + '&';
-            a_tag.href = a_tag.href + 'Position=' + String(current_position) + '&';
+            a_tag.href = a_tag.href + 'Gene=' + String(current_gene) + '&';
             a_tag.href = a_tag.href + 'Phenotype=' + String(current_phenotype) + '';
-            a_tag.innerHTML = 'View Phenotype Distribution';
+            a_tag.innerHTML = 'View Details';
             button_tag.appendChild(a_tag);
 
             for (let j = 0; j < header_array.length; j++) {
                 var detail_td_tag = document.createElement("td");
                 detail_td_tag.setAttribute("style", "border:1px solid black; min-width:100px; height:18.5px;");
-                detail_td_tag.innerHTML = phenotype_distribution_array[i][header_array[j]];
+                detail_td_tag.innerHTML = gene_ranking_array[i][header_array[j]];
                 detail_tr_tag.appendChild(detail_td_tag);
             }
             document.getElementById("table-" + String(current_phenotype.replace(/ /g, "_"))).appendChild(detail_tr_tag);
