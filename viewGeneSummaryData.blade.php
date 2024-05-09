@@ -27,6 +27,7 @@ $phenotype_array = $info['phenotype_array'];
     <br />
 
     <div id="accordion_2"></div>
+    <div id="message_div_2"></div>
 
 
     <div class="footer" style="margin-top:20px;float:right;">© Copyright 2024 KBCommons</div>
@@ -39,5 +40,5 @@ $phenotype_array = $info['phenotype_array'];
     var dataset = <?php if(isset($dataset)) {echo json_encode($dataset, JSON_INVALID_UTF8_IGNORE);} else {echo "";}?>;
     var phenotype_array = <?php if(isset($phenotype_array)) {echo json_encode($phenotype_array, JSON_INVALID_UTF8_IGNORE);} else {echo "";}?>;
 
-    updateGeneRanking('accordion_2', organism, dataset, phenotype_array);
+    updateGeneRanking('accordion_2', 'message_div_2', organism, dataset, phenotype_array);
 </script>

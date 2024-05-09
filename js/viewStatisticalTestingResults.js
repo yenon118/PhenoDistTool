@@ -22,9 +22,16 @@ async function queryPhenotypeDistribution(organism, dataset, gene, phenotypes) {
     });
 }
 
-async function updatePhenotypeDistribution(phenotype_accordion_id, organism, dataset, gene, phenotypes) {
+async function updatePhenotypeDistribution(phenotype_accordion_id, message_div_id, organism, dataset, gene, phenotypes) {
+    document.getElementById(message_div_id).innerHTML = "";
+    var p_tag = document.createElement("p");
+    p_tag.textContent = "Loading...";
+    document.getElementById(message_div_id).appendChild(p_tag);
+
     var result_array = await queryPhenotypeDistribution(organism, dataset, gene, phenotypes);
     var phenotype_distribution_array = result_array['Phenotype_Distribution_Array'];
+
+    document.getElementById(message_div_id).innerHTML = "";
 
     if (phenotype_distribution_array) {
         // Check the existance of accordion instance and remove if it exists
@@ -131,5 +138,10 @@ async function updatePhenotypeDistribution(phenotype_accordion_id, organism, dat
         if (phenotype_array.length == 1) {
             $("#" + String(phenotype_accordion_id)).accordion("option", "active", 0);
         }
+    } else {
+        document.getElementById(message_div_id).innerHTML = "";
+        var p_tag = document.createElement("p");
+        p_tag.textContent = "No data found in the database. ";
+        document.getElementById(message_div_id).appendChild(p_tag);
     }
 }
