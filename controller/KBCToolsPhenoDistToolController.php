@@ -802,7 +802,9 @@ class KBCToolsPhenoDistToolController extends Controller
                             $query_str = $query_str . "Phenotype_Data_Type, ";
                             $query_str = $query_str . "GROUP_CONCAT(DISTINCT PHENO2.Test_Method SEPARATOR '; ') AS Test_Method, ";
                             $query_str = $query_str . "GROUP_CONCAT(DISTINCT PHENO2.Minimum_Test_P_Value SEPARATOR '; ') AS Minimum_Test_P_Value, ";
-                            $query_str = $query_str . "GROUP_CONCAT(DISTINCT PHENO2.Maximum_Test_P_Value SEPARATOR '; ') AS Maximum_Test_P_Value ";
+                            $query_str = $query_str . "GROUP_CONCAT(DISTINCT PHENO2.Minimum_Negative_Log2_Test_P_Value SEPARATOR '; ') AS Minimum_Negative_Log2_Test_P_Value, ";
+                            $query_str = $query_str . "GROUP_CONCAT(DISTINCT PHENO2.Maximum_Test_P_Value SEPARATOR '; ') AS Maximum_Test_P_Value, ";
+                            $query_str = $query_str . "GROUP_CONCAT(DISTINCT PHENO2.Maximum_Negative_Log2_Test_P_Value SEPARATOR '; ') AS Maximum_Negative_Log2_Test_P_Value ";
                             $query_str = $query_str . "FROM ( ";
                             $query_str = $query_str . "    SELECT ";
                             $query_str = $query_str . "    Gene, ";
@@ -810,7 +812,9 @@ class KBCToolsPhenoDistToolController extends Controller
                             $query_str = $query_str . "    Phenotype_Data_Type, ";
                             $query_str = $query_str . "    Test_Method, ";
                             $query_str = $query_str . "    Minimum_Test_P_Value, ";
-                            $query_str = $query_str . "    Maximum_Test_P_Value ";
+                            $query_str = $query_str . "    Minimum_Negative_Log2_Test_P_Value, ";
+                            $query_str = $query_str . "    Maximum_Test_P_Value, ";
+                            $query_str = $query_str . "    Maximum_Negative_Log2_Test_P_Value ";
                             $query_str = $query_str . "    FROM " . $db . "." . $gene_ranking_table . " AS PHENO ";
                             $query_str = $query_str . "    WHERE (PHENO.Phenotype IN ('" . $phenotype_array[$i] . "')) ";
                             $query_str = $query_str . "    ORDER BY Minimum_Test_P_Value ";
@@ -973,15 +977,23 @@ class KBCToolsPhenoDistToolController extends Controller
                             $query_str = $query_str . "GROUP_CONCAT(DISTINCT PHENO2.Normality_Statistic ORDER BY PHENO2.Position ASC SEPARATOR '; ') AS Normality_Statistic, ";
                             $query_str = $query_str . "GROUP_CONCAT(DISTINCT PHENO2.Normality_P_Value ORDER BY PHENO2.Position ASC SEPARATOR '; ') AS Normality_P_Value, ";
                             $query_str = $query_str . "GROUP_CONCAT(DISTINCT PHENO2.Test_Statistic ORDER BY PHENO2.Position ASC SEPARATOR '; ') AS Test_Statistic, ";
-                            $query_str = $query_str . "GROUP_CONCAT(DISTINCT PHENO2.Test_P_Value ORDER BY PHENO2.Position ASC SEPARATOR '; ') AS Test_P_Value ";
+                            $query_str = $query_str . "GROUP_CONCAT(DISTINCT PHENO2.Test_P_Value ORDER BY PHENO2.Position ASC SEPARATOR '; ') AS Test_P_Value, ";
+                            $query_str = $query_str . "GROUP_CONCAT(DISTINCT PHENO2.Negative_Log2_Test_P_Value ORDER BY PHENO2.Position ASC SEPARATOR '; ') AS Negative_Log2_Test_P_Value ";
                             $query_str = $query_str . "FROM ( ";
-                            $query_str = $query_str . "	SELECT PHENO.Chromosome, PHENO.Position, PHENO.Gene, ";
+                            $query_str = $query_str . "	SELECT PHENO.Chromosome, ";
+                            $query_str = $query_str . "	PHENO.Position, ";
+                            $query_str = $query_str . "	PHENO.Gene, ";
                             $query_str = $query_str . "	CONCAT_WS(' vs ', PHENO.Allele_1, PHENO.Allele_2) AS Allele, ";
-                            $query_str = $query_str . "	PHENO.Phenotype, PHENO.Phenotype_Data_Type, ";
-                            $query_str = $query_str . "	PHENO.Test_Method, CONCAT_WS(' vs ', PHENO.Phenotype_Category_1, PHENO.Phenotype_Category_2) AS Phenotype_Category, ";
+                            $query_str = $query_str . "	PHENO.Phenotype, ";
+                            $query_str = $query_str . "	PHENO.Phenotype_Data_Type, ";
+                            $query_str = $query_str . "	PHENO.Test_Method, ";
+                            $query_str = $query_str . "	CONCAT_WS(' vs ', PHENO.Phenotype_Category_1, PHENO.Phenotype_Category_2) AS Phenotype_Category, ";
                             $query_str = $query_str . "	PHENO.Accession_Count, ";
-                            $query_str = $query_str . "	PHENO.Normality_Statistic, PHENO.Normality_P_Value, ";
-                            $query_str = $query_str . "	PHENO.Test_Statistic, PHENO.Test_P_Value ";
+                            $query_str = $query_str . "	PHENO.Normality_Statistic, ";
+                            $query_str = $query_str . "	PHENO.Normality_P_Value, ";
+                            $query_str = $query_str . "	PHENO.Test_Statistic, ";
+                            $query_str = $query_str . "	PHENO.Test_P_Value, ";
+                            $query_str = $query_str . "	PHENO.Negative_Log2_Test_P_Value ";
 
                             $query_str = $query_str . "	FROM " . $db . "." . $phenotype_distribution_table . " AS PHENO ";
 
@@ -1160,29 +1172,54 @@ class KBCToolsPhenoDistToolController extends Controller
         // Execute SQL string
         $gene_result_arr = DB::connection($db)->select($query_str);
 
+        $phenotype_distribution_result_arr = array();
         $allele_catalog_result_arr = array();
 
-        for ($i = 0; $i < count($gene_result_arr); $i++) {
+        if (isset($gene_result_arr)) {
+            if (!empty($gene_result_arr)) {
+                if (is_array($gene_result_arr)) {
+                    for ($i = 0; $i < count($gene_result_arr); $i++) {
 
-            try {
-                // Generate SQL string
-                $query_str = self::getSummarizedDataQueryString(
-                    $organism,
-                    $dataset,
-                    $db,
-                    $gff_table,
-                    $accession_mapping_table,
-                    $gene_result_arr[$i]->Gene,
-                    $gene_result_arr[$i]->Chromosome,
-                    ""
-                );
+                        try {
+                            // Generate query string
+                            $phenotype_distribution_table = "pDist_" . $dataset . "_" . $gene_result_arr[$i]->Chromosome . "";
 
-                $result_arr = DB::connection($db)->select($query_str);
+                            $query_str = "SELECT DISTINCT PHENO.Chromosome, ";
+                            $query_str = $query_str . "PHENO.Position, ";
+                            $query_str = $query_str . "PHENO.Gene ";
+                            $query_str = $query_str . "FROM " . $db . "." . $phenotype_distribution_table . " AS PHENO ";
+                            $query_str = $query_str . "WHERE (PHENO.Phenotype IN ('" . $phenotype . "')) ";
+                            $query_str = $query_str . "AND (PHENO.Gene = '" . $gene . "') ";
+                            $query_str = $query_str . "ORDER BY PHENO.Position, PHENO.Chromosome, PHENO.Gene; ";
 
-                array_push($allele_catalog_result_arr, $result_arr);
-            } catch (\Exception $e) {
+                            $result_arr = DB::connection($db)->select($query_str);
+
+                            array_push($phenotype_distribution_result_arr, $result_arr);
+                        } catch (\Exception $e) {
+                        }
+
+                        try {
+                            // Generate SQL string
+                            $query_str = self::getSummarizedDataQueryString(
+                                $organism,
+                                $dataset,
+                                $db,
+                                $gff_table,
+                                $accession_mapping_table,
+                                $gene_result_arr[$i]->Gene,
+                                $gene_result_arr[$i]->Chromosome,
+                                ""
+                            );
+
+                            $result_arr = DB::connection($db)->select($query_str);
+
+                            array_push($allele_catalog_result_arr, $result_arr);
+                        } catch (\Exception $e) {
+                        }
+
+                    }
+                }
             }
-
         }
 
         // Package variables that need to go to the view
@@ -1194,6 +1231,7 @@ class KBCToolsPhenoDistToolController extends Controller
             'position' => $position,
             'phenotype' => $phenotype,
             'gene_result_arr' => $gene_result_arr,
+            'phenotype_distribution_result_arr' => $phenotype_distribution_result_arr,
             'allele_catalog_result_arr' => $allele_catalog_result_arr
         ];
 

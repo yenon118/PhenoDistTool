@@ -26,8 +26,8 @@ $phenotype_array = $info['phenotype_array'];
     <br />
     <br />
 
-    <div id="accordion_2"></div>
     <div id="message_div_2"></div>
+    <div id="accordion_2"></div>
 
 
     <div class="footer" style="margin-top:20px;float:right;">© Copyright 2024 KBCommons</div>

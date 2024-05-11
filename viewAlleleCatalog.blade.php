@@ -9,6 +9,7 @@ $position = $info['position'];
 $phenotype = $info['phenotype'];
 
 $gene_result_arr = $info['gene_result_arr'];
+$phenotype_distribution_result_arr = $info['phenotype_distribution_result_arr'];
 $allele_catalog_result_arr = $info['allele_catalog_result_arr'];
 
 @endphp
@@ -36,12 +37,12 @@ $allele_catalog_result_arr = $info['allele_catalog_result_arr'];
 
 <!-- Modal -->
 <div id="info-modal" class="info-modal">
-	<!-- Modal content -->
-	<div class="modal-content">
-		<span class="modal-close">&times;</span>
-		<div id="modal-content-div" style='width:100%; height:auto; border:3px solid #000; overflow:scroll;max-height:1000px;'></div>
-		<div id="modal-content-comment"></div>
-	</div>
+    <!-- Modal content -->
+    <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <div id="modal-content-div" style='width:100%; height:auto; border:3px solid #000; overflow:scroll;max-height:1000px;'></div>
+        <div id="modal-content-comment"></div>
+    </div>
 </div>
 
 
@@ -60,8 +61,14 @@ $allele_catalog_result_arr = $info['allele_catalog_result_arr'];
 
     // Render result to a table
     if(isset($allele_catalog_result_arr) && is_array($allele_catalog_result_arr) && !empty($allele_catalog_result_arr)) {
+        echo "<p>* Significant position(s) are highlighted in red. </p>";
 
         for ($i = 0; $i < count($allele_catalog_result_arr); $i++) {
+
+            $phenotype_distribution_position_array = array();
+            for ($j=0; $j < count($phenotype_distribution_result_arr[$i]); $j++) {
+                array_push($phenotype_distribution_position_array, $phenotype_distribution_result_arr[$i][$j]->Position);
+            }
 
             // Make table
             echo "<div style='width:100%; height:auto; border:3px solid #000; overflow:scroll; max-height:1000px;'>";
@@ -82,7 +89,11 @@ $allele_catalog_result_arr = $info['allele_catalog_result_arr'];
                     // Position and genotype_description section
                     $position_array = preg_split("/[;, \n]+/", $value);
                     for ($j = 0; $j < count($position_array); $j++) {
-                        echo "<th style=\"border:1px solid black; min-width:80px;\">" . $position_array[$j] . "</th>";
+                        if (in_array($position_array[$j], $phenotype_distribution_position_array)) {
+                            echo "<th style=\"border:1px solid black; min-width:80px; color:red;\">" . $position_array[$j] . "</th>";
+                        } else {
+                            echo "<th style=\"border:1px solid black; min-width:80px;\">" . $position_array[$j] . "</th>";
+                        }
                     }
                 }
             }

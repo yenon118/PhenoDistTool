@@ -138,6 +138,11 @@ async function updatePhenotypeDistribution(phenotype_accordion_id, message_div_i
         if (phenotype_array.length == 1) {
             $("#" + String(phenotype_accordion_id)).accordion("option", "active", 0);
         }
+
+        document.getElementById(message_div_id).innerHTML = "";
+        var p_tag = document.createElement("p");
+        p_tag.textContent = "* Only significant variant positions are shown in the table.";
+        document.getElementById(message_div_id).appendChild(p_tag);
     } else {
         document.getElementById(message_div_id).innerHTML = "";
         var p_tag = document.createElement("p");

@@ -154,6 +154,11 @@ async function updateGeneRanking(phenotype_accordion_id, message_div_id, organis
         if (phenotype_array.length == 1) {
             $("#" + String(phenotype_accordion_id)).accordion("option", "active", 0);
         }
+
+        document.getElementById(message_div_id).innerHTML = "";
+        var p_tag = document.createElement("p");
+        p_tag.textContent = "* Only significant genes are shown and ranked in the table.";
+        document.getElementById(message_div_id).appendChild(p_tag);
     } else {
         document.getElementById(message_div_id).innerHTML = "";
         var p_tag = document.createElement("p");
