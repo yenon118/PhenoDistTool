@@ -90,7 +90,7 @@ $allele_catalog_result_arr = $info['allele_catalog_result_arr'];
                     $position_array = preg_split("/[;, \n]+/", $value);
                     for ($j = 0; $j < count($position_array); $j++) {
                         if (in_array($position_array[$j], $phenotype_distribution_position_array)) {
-                            echo "<th style=\"border:1px solid black; min-width:80px; color:red;\">" . $position_array[$j] . "</th>";
+                            echo "<th style=\"border:1px solid black; min-width:80px; color:red;\"><a style=\"color:red;\" href=\"../viewVariantAndPhenotypeFigures/" . $organism . "?Dataset=" . $dataset . "&Chromosome=" . $allele_catalog_result_arr[$i][0]->Chromosome . "&Position=" . $position_array[$j] . "&Phenotype=" . $phenotype . "\" target=\"_blank\">" . $position_array[$j] . "</a></th>";
                         } else {
                             echo "<th style=\"border:1px solid black; min-width:80px;\">" . $position_array[$j] . "</th>";
                         }
