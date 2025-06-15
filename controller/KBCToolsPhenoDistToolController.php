@@ -5,24 +5,57 @@ namespace App\Http\Controllers\System\Tools;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
-use App\KBCClasses\DBAdminWrapperClass;
-use App\KBCClasses\DBKBCWrapperClass;
 
 class KBCToolsPhenoDistToolController extends Controller
 {
 
 
-    function __construct()
+    function __construct() {}
+
+
+    function clean_malicious_input($in_var)
     {
-        $this->db_kbc_wrapper = new DBKBCWrapperClass;
+        $string_max_allow_length = 2000;
+
+        if (isset($in_var)) {
+            if (!empty($in_var)) {
+                // Handle if the input is a string
+                if (is_string($in_var)) {
+                    // Truncate string if longer than the max allowed length
+                    if (strlen($in_var) > $string_max_allow_length) {
+                        $in_var = substr($in_var, 0, $string_max_allow_length);
+                    }
+                    // Remove potentially dangerous characters and strip tags
+                    $in_var = preg_replace('/[\[\]\{\}\(\)\\\=\/\'\"\:]/', '', $in_var);
+                    $in_var = strip_tags($in_var);
+                    // Encode special characters to prevent XSS
+                    $in_var = htmlspecialchars($in_var, ENT_QUOTES, 'UTF-8');
+                    // Trim the result
+                    return trim($in_var);
+                }
+                // Handle if the input is an array
+                elseif (is_array($in_var)) {
+                    $out_var = [];
+                    foreach ($in_var as $key => $value) {
+                        // Recursively clean each element of the array
+                        $out_var[$key] = self::clean_malicious_input($value);
+                    }
+                    return $out_var;
+                }
+                // Handle if the input is numeric or boolean
+                elseif (is_numeric($in_var) || is_bool($in_var)) {
+                    return $in_var;
+                }
+            }
+        }
+        return null;
     }
 
 
-    public function getAlleleCatalogTableNames($organism, $dataset) {
+    public function getAlleleCatalogTableNames($organism, $dataset)
+    {
         // Table names and datasets
         if ($organism == "Athaliana" && $dataset == "Arabidopsis1135") {
             $key_column = "Group";
@@ -60,7 +93,8 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function getDataPanelSelectionTableNames($organism) {
+    public function getDataPanelSelectionTableNames($organism)
+    {
         // Table names and datasets
         if ($organism == "Athaliana") {
             $data_panel_selection_table = "pDist_Arabidopsis_Data_Panel_Selection";
@@ -78,7 +112,8 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function getTableNames($organism, $dataset) {
+    public function getTableNames($organism, $dataset)
+    {
         // Table names and datasets
         if ($organism == "Athaliana" && $dataset == "Arabidopsis1135") {
             $gff_table = "pDist_Arabidopsis_TAIR10_GFF";
@@ -111,7 +146,8 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function getSummarizedDataQueryString($organism, $dataset, $db, $gff_table, $accession_mapping_table, $gene, $chromosome, $having = "") {
+    public function getSummarizedDataQueryString($organism, $dataset, $db, $gff_table, $accession_mapping_table, $gene, $chromosome, $having = "")
+    {
         if ($organism == "Zmays" && $dataset == "Maize1210") {
             // Generate SQL string
             $query_str = "SELECT ";
@@ -358,7 +394,8 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function getDataQueryString($organism, $dataset, $db, $gff_table, $accession_mapping_table, $gene, $chromosome, $where = "") {
+    public function getDataQueryString($organism, $dataset, $db, $gff_table, $accession_mapping_table, $gene, $chromosome, $where = "")
+    {
         if ($organism == "Zmays" && $dataset == "Maize1210") {
             // Generate SQL string
             $query_str = "SELECT ";
@@ -580,8 +617,9 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function PhenoDistToolPage(Request $request, $organism) {
-        $admin_db_wapper = new DBAdminWrapperClass;
+    public function PhenoDistToolPage(Request $request, $organism)
+    {
+        $organism = preg_replace('/\s+/', '', $organism);
 
         // Database
         $db = "KBC_" . $organism;
@@ -615,7 +653,7 @@ class KBCToolsPhenoDistToolController extends Controller
                 // Return to view
                 return view('system/tools/PhenoDistTool/PhenoDistToolNotAvailable')->with('info', $info);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             // Package variables that need to go to the view
             $info = [
                 'organism' => $organism
@@ -624,11 +662,13 @@ class KBCToolsPhenoDistToolController extends Controller
             // Return to view
             return view('system/tools/PhenoDistTool/PhenoDistToolNotAvailable')->with('info', $info);
         }
-
     }
 
 
-    public function QueryDistinctDatasetsFromDataPanelSelection(Request $request, $organism) {
+    public function QueryDistinctDatasetsFromDataPanelSelection(Request $request, $organism)
+    {
+        $organism = preg_replace('/\s+/', '', $organism);
+
         // Database
         $db = "KBC_" . $organism;
 
@@ -642,7 +682,7 @@ class KBCToolsPhenoDistToolController extends Controller
 
         try {
             $data_panel_array = DB::connection($db)->select($query_str);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $data_panel_array = array();
         }
 
@@ -655,11 +695,17 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function QueryDistinctChromosomesFromDataPanelSelection(Request $request, $organism) {
+    public function QueryDistinctChromosomesFromDataPanelSelection(Request $request, $organism)
+    {
+        $organism = preg_replace('/\s+/', '', $organism);
+
         // Database
         $db = "KBC_" . $organism;
 
         $dataset = $request->Dataset;
+
+        $dataset = self::clean_malicious_input($dataset);
+        $dataset = preg_replace('/\s+/', '', $dataset);
 
         // Table names and datasets
         $table_names = self::getTableNames($organism, $dataset);
@@ -672,7 +718,7 @@ class KBCToolsPhenoDistToolController extends Controller
 
         try {
             $chromosome_array = DB::connection($db)->select($query_str);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $chromosome_array = array();
         }
 
@@ -686,11 +732,17 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function QueryPhenotypesFromPhenotypeSelection(Request $request, $organism) {
+    public function QueryPhenotypesFromPhenotypeSelection(Request $request, $organism)
+    {
+        $organism = preg_replace('/\s+/', '', $organism);
+
         // Database
         $db = "KBC_" . $organism;
 
         $dataset = $request->Dataset;
+
+        $dataset = self::clean_malicious_input($dataset);
+        $dataset = preg_replace('/\s+/', '', $dataset);
 
         // Table names and datasets
         $table_names = self::getTableNames($organism, $dataset);
@@ -702,7 +754,7 @@ class KBCToolsPhenoDistToolController extends Controller
 
         try {
             $phenotype_selection_array = DB::connection($db)->select($query_str);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $phenotype_selection_array = array();
         }
 
@@ -716,50 +768,70 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function ViewGeneSummaryDataPage(Request $request, $organism) {
-        // Database
-        $db = "KBC_" . $organism;
+    public function ViewGeneSummaryDataPage(Request $request, $organism)
+    {
+        try {
+            $organism = preg_replace('/\s+/', '', $organism);
 
-        $phenotype = $request->phenotype;
-        $dataset = $request->dataset_1;
+            // Database
+            $db = "KBC_" . $organism;
 
-        if (is_string($phenotype)) {
-            $phenotype = trim($phenotype);
-            $temp_phenotype_array = preg_split("/[;, \n]+/", $phenotype);
-            $phenotype_array = array();
-            for ($i = 0; $i < count($temp_phenotype_array); $i++) {
-                if (!empty(trim($temp_phenotype_array[$i]))) {
-                    array_push($phenotype_array, trim($temp_phenotype_array[$i]));
+            $dataset = $request->dataset_1;
+            $phenotype = $request->phenotype;
+
+            $dataset = self::clean_malicious_input($dataset);
+            $dataset = preg_replace('/\s+/', '', $dataset);
+
+            $phenotype = self::clean_malicious_input($phenotype);
+
+            if (is_string($phenotype)) {
+                $phenotype = trim($phenotype);
+                $temp_phenotype_array = preg_split("/[;, \n]+/", $phenotype);
+                $phenotype_array = array();
+                for ($i = 0; $i < count($temp_phenotype_array); $i++) {
+                    if (!empty(trim($temp_phenotype_array[$i]))) {
+                        array_push($phenotype_array, trim($temp_phenotype_array[$i]));
+                    }
+                }
+            } elseif (is_array($phenotype)) {
+                $temp_phenotype_array = $phenotype;
+                $phenotype_array = array();
+                for ($i = 0; $i < count($temp_phenotype_array); $i++) {
+                    if (!empty(trim($temp_phenotype_array[$i]))) {
+                        array_push($phenotype_array, trim($temp_phenotype_array[$i]));
+                    }
                 }
             }
-        } elseif (is_array($phenotype)) {
-            $temp_phenotype_array = $phenotype;
-            $phenotype_array = array();
-            for ($i = 0; $i < count($temp_phenotype_array); $i++) {
-                if (!empty(trim($temp_phenotype_array[$i]))) {
-                    array_push($phenotype_array, trim($temp_phenotype_array[$i]));
-                }
-            }
+
+            // Package variables that need to go to the view
+            $info = [
+                'organism' => $organism,
+                'dataset' => $dataset,
+                'phenotype_array' => $phenotype_array
+            ];
+
+            // Return to view
+            return view('system/tools/PhenoDistTool/viewGeneSummaryData')->with('info', $info);
+        } catch (\Throwable $e) {
+            abort(500);
         }
-
-        // Package variables that need to go to the view
-        $info = [
-            'organism' => $organism,
-            'dataset' => $dataset,
-            'phenotype_array' => $phenotype_array
-        ];
-
-        // Return to view
-        return view('system/tools/PhenoDistTool/viewGeneSummaryData')->with('info', $info);
     }
 
 
-    public function QueryGeneRanking(Request $request, $organism) {
+    public function QueryGeneRanking(Request $request, $organism)
+    {
+        $organism = preg_replace('/\s+/', '', $organism);
+
         // Database
         $db = "KBC_" . $organism;
 
         $dataset = $request->Dataset;
         $phenotypes = $request->Phenotypes;
+
+        $dataset = self::clean_malicious_input($dataset);
+        $dataset = preg_replace('/\s+/', '', $dataset);
+
+        $phenotypes = self::clean_malicious_input($phenotypes);
 
         if (is_string($phenotypes)) {
             $phenotypes = trim($phenotypes);
@@ -830,11 +902,9 @@ class KBCToolsPhenoDistToolController extends Controller
                                 for ($j = 0; $j < count($temp_gene_ranking_array); $j++) {
                                     array_push($gene_ranking_array, $temp_gene_ranking_array[$j]);
                                 }
-
-                            } catch (\Exception $e) {
+                            } catch (\Throwable $e) {
                                 $temp_gene_ranking_array = array();
                             }
-
                         }
                     }
                 }
@@ -852,53 +922,79 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function ViewStatisticalTestingResultsPage(Request $request, $organism) {
-        // Database
-        $db = "KBC_" . $organism;
+    public function ViewStatisticalTestingResultsPage(Request $request, $organism)
+    {
+        try {
+            $organism = preg_replace('/\s+/', '', $organism);
 
-        $phenotype = $request->Phenotype;
-        $dataset = $request->Dataset;
-        $gene = $request->Gene;
+            // Database
+            $db = "KBC_" . $organism;
 
-        if (is_string($phenotype)) {
-            $phenotype = trim($phenotype);
-            $temp_phenotype_array = preg_split("/[;, \n]+/", $phenotype);
-            $phenotype_array = array();
-            for ($i = 0; $i < count($temp_phenotype_array); $i++) {
-                if (!empty(trim($temp_phenotype_array[$i]))) {
-                    array_push($phenotype_array, trim($temp_phenotype_array[$i]));
+            $dataset = $request->Dataset;
+            $gene = $request->Gene;
+            $phenotype = $request->Phenotype;
+
+            $dataset = self::clean_malicious_input($dataset);
+            $dataset = preg_replace('/\s+/', '', $dataset);
+
+            $gene = self::clean_malicious_input($gene);
+            $gene = preg_replace('/\s+/', '', $gene);
+
+            $phenotype = self::clean_malicious_input($phenotype);
+
+            if (is_string($phenotype)) {
+                $phenotype = trim($phenotype);
+                $temp_phenotype_array = preg_split("/[;, \n]+/", $phenotype);
+                $phenotype_array = array();
+                for ($i = 0; $i < count($temp_phenotype_array); $i++) {
+                    if (!empty(trim($temp_phenotype_array[$i]))) {
+                        array_push($phenotype_array, trim($temp_phenotype_array[$i]));
+                    }
+                }
+            } elseif (is_array($phenotype)) {
+                $temp_phenotype_array = $phenotype;
+                $phenotype_array = array();
+                for ($i = 0; $i < count($temp_phenotype_array); $i++) {
+                    if (!empty(trim($temp_phenotype_array[$i]))) {
+                        array_push($phenotype_array, trim($temp_phenotype_array[$i]));
+                    }
                 }
             }
-        } elseif (is_array($phenotype)) {
-            $temp_phenotype_array = $phenotype;
-            $phenotype_array = array();
-            for ($i = 0; $i < count($temp_phenotype_array); $i++) {
-                if (!empty(trim($temp_phenotype_array[$i]))) {
-                    array_push($phenotype_array, trim($temp_phenotype_array[$i]));
-                }
-            }
+
+            // Package variables that need to go to the view
+            $info = [
+                'organism' => $organism,
+                'dataset' => $dataset,
+                'gene' => $gene,
+                'phenotype_array' => $phenotype_array
+            ];
+
+            // Return to view
+            return view('system/tools/PhenoDistTool/viewStatisticalTestingResults')->with('info', $info);
+        } catch (\Throwable $e) {
+            abort(500);
         }
-
-        // Package variables that need to go to the view
-        $info = [
-            'organism' => $organism,
-            'dataset' => $dataset,
-            'gene' => $gene,
-            'phenotype_array' => $phenotype_array
-        ];
-
-        // Return to view
-        return view('system/tools/PhenoDistTool/viewStatisticalTestingResults')->with('info', $info);
     }
 
 
-    public function QueryPhenotypeDistribution(Request $request, $organism) {
+    public function QueryPhenotypeDistribution(Request $request, $organism)
+    {
+        $organism = preg_replace('/\s+/', '', $organism);
+
         // Database
         $db = "KBC_" . $organism;
 
         $dataset = $request->Dataset;
         $gene = $request->Gene;
         $phenotypes = $request->Phenotypes;
+
+        $dataset = self::clean_malicious_input($dataset);
+        $dataset = preg_replace('/\s+/', '', $dataset);
+
+        $gene = self::clean_malicious_input($gene);
+        $gene = preg_replace('/\s+/', '', $gene);
+
+        $phenotypes = self::clean_malicious_input($phenotypes);
 
         if (is_string($phenotypes)) {
             $phenotypes = trim($phenotypes);
@@ -1011,11 +1107,9 @@ class KBCToolsPhenoDistToolController extends Controller
                                 for ($j = 0; $j < count($temp_phenotype_distribution_array); $j++) {
                                     array_push($phenotype_distribution_array, $temp_phenotype_distribution_array[$j]);
                                 }
-
-                            } catch (\Exception $e) {
+                            } catch (\Throwable $e) {
                                 $temp_phenotype_distribution_array = array();
                             }
-
                         }
                     }
                 }
@@ -1034,30 +1128,51 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function ViewVariantAndPhenotypeFiguresPage(Request $request, $organism) {
-        // Database
-        $db = "KBC_" . $organism;
+    public function ViewVariantAndPhenotypeFiguresPage(Request $request, $organism)
+    {
+        try {
+            $organism = preg_replace('/\s+/', '', $organism);
 
-        $dataset = $request->Dataset;
-        $chromosome = $request->Chromosome;
-        $position = $request->Position;
-        $phenotype = $request->Phenotype;
+            // Database
+            $db = "KBC_" . $organism;
 
-        // Package variables that need to go to the view
-        $info = [
-            'organism' => $organism,
-            'dataset' => $dataset,
-            'chromosome' => $chromosome,
-            'position' => $position,
-            'phenotype' => $phenotype
-        ];
+            $dataset = $request->Dataset;
+            $chromosome = $request->Chromosome;
+            $position = $request->Position;
+            $phenotype = $request->Phenotype;
 
-        // Return to view
-        return view('system/tools/PhenoDistTool/viewVariantAndPhenotypeFigures')->with('info', $info);
+            $dataset = self::clean_malicious_input($dataset);
+            $dataset = preg_replace('/\s+/', '', $dataset);
+
+            $chromosome = self::clean_malicious_input($chromosome);
+            $chromosome = preg_replace('/\s+/', '', $chromosome);
+
+            $position = self::clean_malicious_input($position);
+            $position = preg_replace("/[^0-9.]/", "", $position);
+
+            $phenotype = self::clean_malicious_input($phenotype);
+
+            // Package variables that need to go to the view
+            $info = [
+                'organism' => $organism,
+                'dataset' => $dataset,
+                'chromosome' => $chromosome,
+                'position' => $position,
+                'phenotype' => $phenotype
+            ];
+
+            // Return to view
+            return view('system/tools/PhenoDistTool/viewVariantAndPhenotypeFigures')->with('info', $info);
+        } catch (\Throwable $e) {
+            abort(500);
+        }
     }
 
 
-    public function QueryVariantAndPhenotypeFigures(Request $request, $organism) {
+    public function QueryVariantAndPhenotypeFigures(Request $request, $organism)
+    {
+        $organism = preg_replace('/\s+/', '', $organism);
+
         // Database
         $db = "KBC_" . $organism;
 
@@ -1065,6 +1180,17 @@ class KBCToolsPhenoDistToolController extends Controller
         $chromosome = $request->Chromosome;
         $position = $request->Position;
         $phenotype = $request->Phenotype;
+
+        $dataset = self::clean_malicious_input($dataset);
+        $dataset = preg_replace('/\s+/', '', $dataset);
+
+        $chromosome = self::clean_malicious_input($chromosome);
+        $chromosome = preg_replace('/\s+/', '', $chromosome);
+
+        $position = self::clean_malicious_input($position);
+        $position = preg_replace("/[^0-9.]/", "", $position);
+
+        $phenotype = self::clean_malicious_input($phenotype);
 
         // Table names and datasets
         $table_names = self::getAlleleCatalogTableNames($organism, $dataset);
@@ -1124,123 +1250,146 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function ViewAlleleCatalogPage(Request $request, $organism) {
-        // Database
-        $db = "KBC_" . $organism;
+    public function ViewAlleleCatalogPage(Request $request, $organism)
+    {
+        try {
+            $organism = preg_replace('/\s+/', '', $organism);
 
-        $dataset = $request->Dataset;
-        $gene = $request->Gene;
-        $chromosome = $request->Chromosome;
-        $position = $request->Position;
-        $phenotype = $request->Phenotype;
+            // Database
+            $db = "KBC_" . $organism;
 
-        // Table names and datasets
-        $table_names = self::getAlleleCatalogTableNames($organism, $dataset);
-        $key_column = $table_names["key_column"];
-        $gff_table = $table_names["gff_table"];
-        $accession_mapping_table = $table_names["accession_mapping_table"];
-        $phenotype_table = $table_names["phenotype_table"];
-        $phenotype_selection_table = $table_names["phenotype_selection_table"];
-        $genotype_table = "act_" . $dataset . "_genotype_" . $chromosome;
-        $functional_effect_table = "act_" . $dataset . "_func_eff_" . $chromosome;
+            $dataset = $request->Dataset;
+            $gene = $request->Gene;
+            $chromosome = $request->Chromosome;
+            $position = $request->Position;
+            $phenotype = $request->Phenotype;
 
-        // Generate SQL string
-        $query_str = "";
-        if ($query_str == "") {
-            if (isset($chromosome) && isset($position)) {
-                if (!empty($chromosome) && !empty($position)) {
-                    $query_str = "SELECT Chromosome, Start, End, Name AS Gene ";
-                    $query_str = $query_str . "FROM " . $db . "." . $gff_table . " ";
-                    $query_str = $query_str . "WHERE (Chromosome = '" . $chromosome . "') AND ((Start <= " . $position . ") AND (End >= " . $position . "));";
-                }
-            }
-        }
-        if ($query_str == "") {
-            if (isset($gene)) {
-                if (!empty($gene)) {
-                    $query_str = "SELECT Chromosome, Start, End, Name AS Gene ";
-                    $query_str = $query_str . "FROM " . $db . "." . $gff_table . " ";
-                    $query_str = $query_str . "WHERE (Name = '" . $gene . "') ";
-                }
-            }
-        }
+            $dataset = self::clean_malicious_input($dataset);
+            $dataset = preg_replace('/\s+/', '', $dataset);
 
-        if ($query_str == "") {
-            exit();
-        }
+            $gene = self::clean_malicious_input($gene);
+            $gene = preg_replace('/\s+/', '', $gene);
 
-        // Execute SQL string
-        $gene_result_arr = DB::connection($db)->select($query_str);
+            $chromosome = self::clean_malicious_input($chromosome);
+            $chromosome = preg_replace('/\s+/', '', $chromosome);
 
-        $phenotype_distribution_result_arr = array();
-        $allele_catalog_result_arr = array();
+            $position = self::clean_malicious_input($position);
+            $position = preg_replace("/[^0-9.]/", "", $position);
 
-        if (isset($gene_result_arr)) {
-            if (!empty($gene_result_arr)) {
-                if (is_array($gene_result_arr)) {
-                    for ($i = 0; $i < count($gene_result_arr); $i++) {
+            $phenotype = self::clean_malicious_input($phenotype);
 
-                        try {
-                            // Generate query string
-                            $phenotype_distribution_table = "pDist_" . $dataset . "_" . $gene_result_arr[$i]->Chromosome . "";
+            // Table names and datasets
+            $table_names = self::getAlleleCatalogTableNames($organism, $dataset);
+            $key_column = $table_names["key_column"];
+            $gff_table = $table_names["gff_table"];
+            $accession_mapping_table = $table_names["accession_mapping_table"];
+            $phenotype_table = $table_names["phenotype_table"];
+            $phenotype_selection_table = $table_names["phenotype_selection_table"];
+            $genotype_table = "act_" . $dataset . "_genotype_" . $chromosome;
+            $functional_effect_table = "act_" . $dataset . "_func_eff_" . $chromosome;
 
-                            $query_str = "SELECT DISTINCT PHENO.Chromosome, ";
-                            $query_str = $query_str . "PHENO.Position, ";
-                            $query_str = $query_str . "PHENO.Gene ";
-                            $query_str = $query_str . "FROM " . $db . "." . $phenotype_distribution_table . " AS PHENO ";
-                            $query_str = $query_str . "WHERE (PHENO.Phenotype IN ('" . $phenotype . "')) ";
-                            $query_str = $query_str . "AND (PHENO.Gene = '" . $gene . "') ";
-                            $query_str = $query_str . "ORDER BY PHENO.Position, PHENO.Chromosome, PHENO.Gene; ";
-
-                            $result_arr = DB::connection($db)->select($query_str);
-
-                            array_push($phenotype_distribution_result_arr, $result_arr);
-                        } catch (\Exception $e) {
-                        }
-
-                        try {
-                            // Generate SQL string
-                            $query_str = self::getSummarizedDataQueryString(
-                                $organism,
-                                $dataset,
-                                $db,
-                                $gff_table,
-                                $accession_mapping_table,
-                                $gene_result_arr[$i]->Gene,
-                                $gene_result_arr[$i]->Chromosome,
-                                ""
-                            );
-
-                            $result_arr = DB::connection($db)->select($query_str);
-
-                            array_push($allele_catalog_result_arr, $result_arr);
-                        } catch (\Exception $e) {
-                        }
-
+            // Generate SQL string
+            $query_str = "";
+            if ($query_str == "") {
+                if (isset($chromosome) && isset($position)) {
+                    if (!empty($chromosome) && !empty($position)) {
+                        $query_str = "SELECT Chromosome, Start, End, Name AS Gene ";
+                        $query_str = $query_str . "FROM " . $db . "." . $gff_table . " ";
+                        $query_str = $query_str . "WHERE (Chromosome = '" . $chromosome . "') AND ((Start <= " . $position . ") AND (End >= " . $position . "));";
                     }
                 }
             }
+            if ($query_str == "") {
+                if (isset($gene)) {
+                    if (!empty($gene)) {
+                        $query_str = "SELECT Chromosome, Start, End, Name AS Gene ";
+                        $query_str = $query_str . "FROM " . $db . "." . $gff_table . " ";
+                        $query_str = $query_str . "WHERE (Name = '" . $gene . "') ";
+                    }
+                }
+            }
+
+            if ($query_str == "") {
+                exit();
+            }
+
+            // Execute SQL string
+            $gene_result_arr = DB::connection($db)->select($query_str);
+
+            $phenotype_distribution_result_arr = array();
+            $allele_catalog_result_arr = array();
+
+            if (isset($gene_result_arr)) {
+                if (!empty($gene_result_arr)) {
+                    if (is_array($gene_result_arr)) {
+                        for ($i = 0; $i < count($gene_result_arr); $i++) {
+
+                            try {
+                                // Generate query string
+                                $phenotype_distribution_table = "pDist_" . $dataset . "_" . $gene_result_arr[$i]->Chromosome . "";
+
+                                $query_str = "SELECT DISTINCT PHENO.Chromosome, ";
+                                $query_str = $query_str . "PHENO.Position, ";
+                                $query_str = $query_str . "PHENO.Gene ";
+                                $query_str = $query_str . "FROM " . $db . "." . $phenotype_distribution_table . " AS PHENO ";
+                                $query_str = $query_str . "WHERE (PHENO.Phenotype IN ('" . $phenotype . "')) ";
+                                $query_str = $query_str . "AND (PHENO.Gene = '" . $gene . "') ";
+                                $query_str = $query_str . "ORDER BY PHENO.Position, PHENO.Chromosome, PHENO.Gene; ";
+
+                                $result_arr = DB::connection($db)->select($query_str);
+
+                                array_push($phenotype_distribution_result_arr, $result_arr);
+                            } catch (\Throwable $e) {
+                            }
+
+                            try {
+                                // Generate SQL string
+                                $query_str = self::getSummarizedDataQueryString(
+                                    $organism,
+                                    $dataset,
+                                    $db,
+                                    $gff_table,
+                                    $accession_mapping_table,
+                                    $gene_result_arr[$i]->Gene,
+                                    $gene_result_arr[$i]->Chromosome,
+                                    ""
+                                );
+
+                                $result_arr = DB::connection($db)->select($query_str);
+
+                                array_push($allele_catalog_result_arr, $result_arr);
+                            } catch (\Throwable $e) {
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Package variables that need to go to the view
+            $info = [
+                'organism' => $organism,
+                'dataset' => $dataset,
+                'gene' => $gene,
+                'chromosome' => $chromosome,
+                'position' => $position,
+                'phenotype' => $phenotype,
+                'gene_result_arr' => $gene_result_arr,
+                'phenotype_distribution_result_arr' => $phenotype_distribution_result_arr,
+                'allele_catalog_result_arr' => $allele_catalog_result_arr
+            ];
+
+            // Return to view
+            return view('system/tools/PhenoDistTool/viewAlleleCatalog')->with('info', $info);
+        } catch (\Throwable $e) {
+            abort(500);
         }
-
-        // Package variables that need to go to the view
-        $info = [
-            'organism' => $organism,
-            'dataset' => $dataset,
-            'gene' => $gene,
-            'chromosome' => $chromosome,
-            'position' => $position,
-            'phenotype' => $phenotype,
-            'gene_result_arr' => $gene_result_arr,
-            'phenotype_distribution_result_arr' => $phenotype_distribution_result_arr,
-            'allele_catalog_result_arr' => $allele_catalog_result_arr
-        ];
-
-        // Return to view
-        return view('system/tools/PhenoDistTool/viewAlleleCatalog')->with('info', $info);
     }
 
 
-    public function QueryMetadataByImprovementStatusAndGenotypeCombination(Request $request, $organism) {
+    public function QueryMetadataByImprovementStatusAndGenotypeCombination(Request $request, $organism)
+    {
+        $organism = preg_replace('/\s+/', '', $organism);
+
         // Database
         $db = "KBC_" . $organism;
 
@@ -1251,6 +1400,24 @@ class KBCToolsPhenoDistToolController extends Controller
         $position = $request->Position;
         $genotype = $request->Genotype;
         $genotype_description = $request->Genotype_Description;
+
+        $dataset = self::clean_malicious_input($dataset);
+        $dataset = preg_replace('/\s+/', '', $dataset);
+
+        $key = self::clean_malicious_input($key);
+        $key = preg_replace('/\s+/', '', $key);
+
+        $gene = self::clean_malicious_input($gene);
+        $gene = preg_replace('/\s+/', '', $gene);
+
+        $chromosome = self::clean_malicious_input($chromosome);
+        $chromosome = preg_replace('/\s+/', '', $chromosome);
+
+        $position = self::clean_malicious_input($position);
+
+        $genotype = self::clean_malicious_input($genotype);
+
+        $genotype_description = self::clean_malicious_input($genotype_description);
 
         // Table names and datasets
         $table_names = self::getAlleleCatalogTableNames($organism, $dataset);
@@ -1289,13 +1456,25 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function QueryAllCountsByGene(Request $request, $organism) {
+    public function QueryAllCountsByGene(Request $request, $organism)
+    {
+        $organism = preg_replace('/\s+/', '', $organism);
+
         // Database
         $db = "KBC_" . $organism;
 
         $dataset = $request->Dataset;
         $gene = $request->Gene;
         $chromosome = $request->Chromosome;
+
+        $dataset = self::clean_malicious_input($dataset);
+        $dataset = preg_replace('/\s+/', '', $dataset);
+
+        $gene = self::clean_malicious_input($gene);
+        $gene = preg_replace('/\s+/', '', $gene);
+
+        $chromosome = self::clean_malicious_input($chromosome);
+        $chromosome = preg_replace('/\s+/', '', $chromosome);
 
         // Table names and datasets
         $table_names = self::getAlleleCatalogTableNames($organism, $dataset);
@@ -1325,13 +1504,25 @@ class KBCToolsPhenoDistToolController extends Controller
     }
 
 
-    public function QueryAllByGene(Request $request, $organism) {
+    public function QueryAllByGene(Request $request, $organism)
+    {
+        $organism = preg_replace('/\s+/', '', $organism);
+
         // Database
         $db = "KBC_" . $organism;
 
         $dataset = $request->Dataset;
         $gene = $request->Gene;
         $chromosome = $request->Chromosome;
+
+        $dataset = self::clean_malicious_input($dataset);
+        $dataset = preg_replace('/\s+/', '', $dataset);
+
+        $gene = self::clean_malicious_input($gene);
+        $gene = preg_replace('/\s+/', '', $gene);
+
+        $chromosome = self::clean_malicious_input($chromosome);
+        $chromosome = preg_replace('/\s+/', '', $chromosome);
 
         // Table names and datasets
         $table_names = self::getAlleleCatalogTableNames($organism, $dataset);
@@ -1360,7 +1551,7 @@ class KBCToolsPhenoDistToolController extends Controller
         for ($i = 0; $i < count($result_arr); $i++) {
             if (preg_match("/\+/i", $result_arr[$i]->Imputation)) {
                 $result_arr[$i]->Imputation = "+";
-            } else{
+            } else {
                 $result_arr[$i]->Imputation = "";
             }
         }

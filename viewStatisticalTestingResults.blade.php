@@ -1,10 +1,10 @@
 @php
-include resource_path() . '/views/system/config.blade.php';
+    include resource_path() . '/views/system/config.blade.php';
 
-$organism = $info['organism'];
-$dataset = $info['dataset'];
-$gene = $info['gene'];
-$phenotype_array = $info['phenotype_array'];
+    $organism = $info['organism'];
+    $dataset = $info['dataset'];
+    $gene = $info['gene'];
+    $phenotype_array = $info['phenotype_array'];
 
 @endphp
 
@@ -12,17 +12,18 @@ $phenotype_array = $info['phenotype_array'];
 <head>
     <title>{{ $config_organism }}-KB</title>
 
-    <link rel="shortcut icon" href="{{ asset('css/images/Header/kbcommons_icon.ico') }}">
-
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css"></link>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+    </link>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"
+        integrity="sha256-AlTido85uXPlSyyaZNsjJXeCs07eSv3r43kyCVc8ChI=" crossorigin="anonymous"></script>
 </head>
 
 
 <body>
     <!-- Back button -->
-    <a href="{{ route('system.tools.PhenoDistTool', ['organism'=>$organism]) }}"><button> &lt; Back </button></a>
+    <a href="{{ route('system.tools.PhenoDistTool', ['organism' => $organism]) }}"><button> &lt; Back </button></a>
 
     <br />
     <br />
@@ -30,17 +31,32 @@ $phenotype_array = $info['phenotype_array'];
     <div id="message_div_3"></div>
     <div id="accordion_3"></div>
 
-
-    <div class="footer" style="margin-top:20px;float:right;">© Copyright 2024 KBCommons</div>
 </body>
 
-<script src="{{ asset('system/home/PhenoDistTool/js/viewStatisticalTestingResults.js') }}" type="text/javascript"></script>
+<script src="{{ asset('system/home/PhenoDistTool/js/viewStatisticalTestingResults.js') }}" type="text/javascript">
+</script>
 
 <script type="text/javascript">
-    var organism = <?php if(isset($organism)) {echo json_encode($organism, JSON_INVALID_UTF8_IGNORE);} else {echo "";}?>;
-    var dataset = <?php if(isset($dataset)) {echo json_encode($dataset, JSON_INVALID_UTF8_IGNORE);} else {echo "";}?>;
-    var gene = <?php if(isset($gene)) {echo json_encode($gene, JSON_INVALID_UTF8_IGNORE);} else {echo "";}?>;
-    var phenotype_array = <?php if(isset($phenotype_array)) {echo json_encode($phenotype_array, JSON_INVALID_UTF8_IGNORE);} else {echo "";}?>;
+    var organism = <?php if (isset($organism)) {
+        echo json_encode($organism, JSON_INVALID_UTF8_IGNORE);
+    } else {
+        echo '';
+    } ?>;
+    var dataset = <?php if (isset($dataset)) {
+        echo json_encode($dataset, JSON_INVALID_UTF8_IGNORE);
+    } else {
+        echo '';
+    } ?>;
+    var gene = <?php if (isset($gene)) {
+        echo json_encode($gene, JSON_INVALID_UTF8_IGNORE);
+    } else {
+        echo '';
+    } ?>;
+    var phenotype_array = <?php if (isset($phenotype_array)) {
+        echo json_encode($phenotype_array, JSON_INVALID_UTF8_IGNORE);
+    } else {
+        echo '';
+    } ?>;
 
     updatePhenotypeDistribution('accordion_3', 'message_div_3', organism, dataset, gene, phenotype_array);
 </script>
